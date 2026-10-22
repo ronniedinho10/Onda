@@ -1,0 +1,8 @@
+(()=>{
+ OndaI18n.register([['Ajustes','Settings','Réglages'],['Apariencia','Appearance','Apparence'],['Idioma','Language','Langue'],['Ayuda','Help','Aide']]);
+ const nav=document.querySelector('aside nav'),button=document.createElement('button');button.id='navSettings';button.className='nav';button.innerHTML='⚙ <span>Ajustes</span>';button.setAttribute('aria-label','Ajustes');nav.append(button);
+ const dialog=document.createElement('dialog');dialog.id='settingsDialog';dialog.innerHTML='<button class="close" aria-label="Cerrar">×</button><h2>Ajustes</h2><section class="settings-group"><h3>Apariencia</h3><div id="settingsAppearance"></div></section><section class="settings-group"><h3>Idioma</h3><div id="settingsLanguage"></div></section><section class="settings-group" id="settingsHelp"><h3>Ayuda</h3></section>';document.body.append(dialog);
+ dialog.querySelector('#settingsAppearance').append(document.querySelector('.appearance-picker'));dialog.querySelector('#settingsLanguage').append(document.querySelector('.language-picker'));dialog.querySelector('#settingsHelp').append(document.querySelector('#help'));
+ button.onclick=()=>dialog.showModal();dialog.querySelector('.close').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()});
+ const menu=document.querySelector('#toggleSidebar');document.body.append(menu);menu.classList.add('floating-menu');const network=document.querySelector('#networkStatus');if(network)document.body.append(network);document.querySelector('header').remove();
+})();
