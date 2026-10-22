@@ -1,0 +1,10 @@
+Onda world selector
+
+Globe.GL 2.46.2 (MIT)
+https://github.com/vasturiano/globe.gl
+Bundled distribution in globe-lib.js. License in globe.LICENSE.
+
+Country boundaries: Natural Earth, 1:110m, public domain.
+https://www.naturalearthdata.com/about/terms-of-use/
+Source conversion: https://github.com/nvkelso/natural-earth-vector
+Country borders are simplified and represent cartographic data, not an endorsement of any territorial claim.
