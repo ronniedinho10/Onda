@@ -26,6 +26,8 @@ globalThis.OndaI18n=(()=>{
     [/^Estilos de (.+)$/,(m)=>(language==='en'?'Styles in ':language==='fr'?'Styles : ':'Estilos de ')+text(m[1],depth+1)],
     [/^Explora (.+)$/,(m)=>(language==='en'?'Explore ':language==='fr'?'Explorer ':'Explora ')+text(m[1],depth+1)],
     [/^Ver todas las zonas \((\d+)\)$/,(m)=>(language==='en'?'All locations':language==='fr'?'Tous les lieux':'Ver todas las zonas')+' ('+m[1]+')'],
+    [/^(\d+) (emisora cargada|emisoras cargadas)$/,(m)=>m[1]+(language==='en'?(m[1]==='1'?' station loaded':' stations loaded'):language==='fr'?(m[1]==='1'?' station chargée':' stations chargées'):' '+m[2])],
+    [/^(\d+) (favorita|favoritas)$/,(m)=>m[1]+(language==='en'?(m[1]==='1'?' favorite':' favorites'):language==='fr'?(m[1]==='1'?' favorite':' favorites'):' '+m[2])],
     [/^(\d+) emisoras$/,(m)=>m[1]+(language==='en'?' stations':language==='fr'?' stations':' emisoras')],
     [/^([\d.,]+) clics \/ 24 h$/,(m)=>m[1]+(language==='en'?' clicks / 24 h':language==='fr'?' clics / 24 h':' clics / 24 h')],
     [/^La radio se pausará en (\d+) minutos\.$/,(m)=>language==='en'?'Radio will pause in '+m[1]+' minutes.':language==='fr'?'La radio se mettra en pause dans '+m[1]+' minutes.':source],
