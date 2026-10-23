@@ -1,6 +1,6 @@
 (()=>{
  const stage=document.querySelector('.radio-stage'),section=document.querySelector('.expanded-player-section');
- const dialog=document.createElement('dialog');dialog.id='expandedPlayer';dialog.setAttribute('aria-label','Reproductor');dialog.innerHTML='<div class="player-sheet-header"><button class="player-collapse" aria-label="Minimizar reproductor"><span aria-hidden="true"></span></button><span class="expanded-heading">Reproductor</span></div><div class="player-sheet-content"></div>';const content=dialog.querySelector('.player-sheet-content'),handle=dialog.querySelector('.player-collapse');const surface=document.createElement('div');surface.className='player-sheet-surface';surface.append(...dialog.children);dialog.append(surface);content.append(stage);document.body.append(dialog);section.remove();
+ const dialog=document.createElement('dialog');dialog.id='expandedPlayer';dialog.setAttribute('aria-label','Reproductor');dialog.innerHTML='<div class="player-sheet-header"><button class="player-collapse" aria-label="Minimizar reproductor"><span aria-hidden="true"></span></button></div><div class="player-sheet-content"></div>';const content=dialog.querySelector('.player-sheet-content'),handle=dialog.querySelector('.player-collapse');const surface=document.createElement('div');surface.className='player-sheet-surface';surface.append(...dialog.children);dialog.append(surface);content.append(stage);document.body.append(dialog);section.remove();
  let drag=null;
  const reset=()=>{surface.style.transform='';dialog.classList.remove('is-pulling-down')};
  function cleanup(){drag=null;reset();document.body.classList.remove('player-expanded')}
@@ -10,10 +10,9 @@
  handle.onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.addEventListener('close',()=>{cleanup();document.querySelector('.mini-open').focus()});dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close()}});
  document.addEventListener('onda-open-player',open);document.querySelector('#miniPlayer').addEventListener('click',e=>{if(!e.target.closest('button,input,label'))open()});
  stage.querySelector('.stage-kicker').hidden=true;stage.querySelector('.record-wrap').style.touchAction='none';
- dialog.addEventListener('pointerdown',e=>{const onHandle=Boolean(e.target.closest('.player-sheet-header'));if(!e.isPrimary||e.button!==0||(!onHandle&&e.target.closest('button,input,select,a,label,.player-actions')))return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,locked:false,scroll:content.scrollTop,onHandle}});
- dialog.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.locked&&Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)){drag=null;return}if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)*1.4){e.preventDefault();drag.locked=true;const pull=drag.onHandle?Math.max(0,dy):Math.max(0,dy-drag.scroll);if(!drag.onHandle)content.scrollTop=Math.max(0,drag.scroll-dy);drag.pull=pull;dialog.classList.toggle('is-pulling-down',pull>0);surface.style.transform='translateY('+Math.min(pull,500)+'px)'}});
-
- window.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const dismiss=drag.locked&&drag.pull>70;drag=null;if(dismiss)close();else reset()},true);
+ dialog.addEventListener('pointerdown',e=>{if(e.isPrimary===false||e.button!==0||!e.target.closest('.player-sheet-header'))return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,locked:false,pull:0};dialog.querySelector('.player-sheet-header').setPointerCapture?.(e.pointerId)});
+ dialog.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)){drag=null;reset();return}if(dy>18&&dy>Math.abs(dx)*1.6){e.preventDefault();drag.locked=true;drag.pull=dy;dialog.classList.add('is-pulling-down');surface.style.transform='translateY('+Math.min(dy*.8,400)+'px)'}});
+ window.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const dismiss=drag.locked&&drag.pull>100;drag=null;if(dismiss)close();else reset()},true);
  for(const event of ['pointercancel','lostpointercapture'])dialog.addEventListener(event,()=>{if(!drag)return;drag=null;reset()});
 
 })();

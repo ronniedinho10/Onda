@@ -12,7 +12,7 @@
  $('#moreCountriesMap').addEventListener('click',()=>dialog.close());
  let automatic=false,manual=false;
  document.addEventListener('onda-country-selected',()=>{if(!automatic&&document.readyState!=='loading')manual=true;sync();if(dialog.open)dialog.close()});document.addEventListener('onda-language-changed',sync);
- const tools=$('.library-tools'),toggle=document.createElement('button');toggle.id='homeOptions';toggle.type='button';toggle.textContent=tr('Opciones');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls','homeLibraryOptions');tools.id='homeLibraryOptions';tools.prepend($('#stationSearchScope'));tools.hidden=true;$('.station-search-row').append(toggle);toggle.onclick=()=>{tools.hidden=!tools.hidden;toggle.setAttribute('aria-expanded',String(!tools.hidden))};
+ const tools=$('.library-tools'),toggle=document.createElement('button');toggle.id='homeOptions';toggle.type='button';toggle.textContent=tr('Opciones');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls','homeLibraryOptions');tools.id='homeLibraryOptions';$('#stationSearchScope').hidden=true;tools.hidden=true;$('.station-search-row').append(toggle);toggle.onclick=()=>{tools.hidden=!tools.hidden;toggle.setAttribute('aria-expanded',String(!tools.hidden))};
  document.addEventListener('onda-language-changed',()=>toggle.textContent=tr('Opciones'));
  tools.append($('#placesFold'),$('#stylesFold'));document.addEventListener('onda-location-selected',()=>{tools.hidden=true;toggle.setAttribute('aria-expanded','false');$('#placesFold').open=false});
  // Keep the first view focused on station artwork. This migrates the previous default once.
