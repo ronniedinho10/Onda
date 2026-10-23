@@ -1,0 +1,11 @@
+(()=>{
+ const KEY='onda-stream-health',TTL=24*60*60*1000;let records={};try{const saved=JSON.parse(localStorage.getItem(KEY)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))records=saved}catch{}
+ const id=s=>s.stationuuid+'|'+(s.url_resolved||s.url||'');
+ function entry(s){const row=records[id(s)];return row&&Date.now()-row.time<TTL?row:null}
+ function save(){const rows=Object.entries(records).filter(([,v])=>v&&Date.now()-v.time<TTL).sort((a,b)=>b[1].time-a[1].time).slice(0,160);records=Object.fromEntries(rows);try{localStorage.setItem(KEY,JSON.stringify(records))}catch{}}
+ function record(s,status,reason=''){if(!s?.stationuuid)return;records[id(s)]={status,reason,time:Date.now()};save()}
+ function rank(s){if(s.lastcheckok===0||s.lastcheckok==='0')return 4;const row=entry(s);return !row?2:row.status==='played'?0:row.status==='checked'?1:3}
+ async function probe(s,signal){const row=entry(s);if(row&&Date.now()-row.time<(row.status==='failed'?15*60*1000:5*60*1000))return;let url;try{url=new URL(s.url_resolved||s.url);if(url.protocol!=='https:'){record(s,'failed','https');return}}catch{return}const controller=new AbortController();const abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,2500);try{const response=await fetch(url.href,{signal:controller.signal,mode:'cors',credentials:'omit',referrerPolicy:'no-referrer'});const type=(response.headers?.get('content-type')||'').toLowerCase();if(!signal?.aborted){if(response.ok&&!type.includes('text/html')){if(entry(s)?.status!=='played')record(s,'checked')}else if(([401,403,404,410,451].includes(response.status)||response.status>=500)||type.includes('text/html'))record(s,'failed','http-'+response.status)}await response.body?.cancel()}catch(error){if(!controller.signal.aborted&&!signal?.aborted&&error.name==='TypeError')record(s,'failed','network-or-cors')}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}}
+ async function checkTop(rows,signal){if(signal?.aborted)return;const top=[...rows].sort((a,b)=>(Number(b.clickcount)||0)-(Number(a.clickcount)||0)).slice(0,4);await Promise.all(top.map(s=>probe(s,signal)))}
+ globalThis.OndaHealth={rank,checkTop,entry,failed:s=>record(s,'failed','playback'),played:s=>record(s,'played'),clear(s){delete records[id(s)];save()}};
+})();

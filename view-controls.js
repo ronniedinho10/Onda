@@ -1,10 +1,14 @@
 (()=>{
- const tr=s=>OndaI18n.text(s);
- OndaI18n.register([['Ocultar menú','Hide menu','Masquer le menu'],['Mostrar menú','Show menu','Afficher le menu']]);
+ const tr=s=>OndaI18n.text(s),media=matchMedia('(max-width:760px)');
+ OndaI18n.register([['Ocultar menú','Hide menu','Masquer le menu'],['Mostrar menú','Show menu','Afficher le menu'],['Cerrar menú','Close menu','Fermer le menu'],['Menú','Menu','Menu']]);
  const sidebar=document.querySelector('aside');sidebar.id='appSidebar';
  const menu=document.createElement('button');menu.id='toggleSidebar';menu.className='view-control';menu.setAttribute('aria-controls',sidebar.id);
- let collapsed=matchMedia('(max-width:760px)').matches;try{if(localStorage.getItem('onda-sidebar-hidden')!==null)collapsed=localStorage.getItem('onda-sidebar-hidden')==='true'}catch{}
- function sync(){document.body.classList.toggle('sidebar-hidden',collapsed);sidebar.hidden=collapsed;menu.textContent='☰';menu.title=tr(collapsed?'Mostrar menú':'Ocultar menú');menu.setAttribute('aria-label',menu.title);menu.setAttribute('aria-expanded',String(!collapsed));window.dispatchEvent(new Event('resize'))}
- menu.onclick=()=>{collapsed=!collapsed;try{localStorage.setItem('onda-sidebar-hidden',String(collapsed))}catch{}sync()};document.querySelector('header').prepend(menu);sync();
- document.addEventListener('onda-language-changed',sync);
+ const backdrop=document.createElement('button');backdrop.id='menuBackdrop';backdrop.type='button';backdrop.tabIndex=-1;backdrop.setAttribute('aria-label','Cerrar menú');document.body.append(backdrop);
+ let collapsed=media.matches;try{if(!media.matches&&localStorage.getItem('onda-sidebar-hidden')!==null)collapsed=localStorage.getItem('onda-sidebar-hidden')==='true'}catch{}
+ function sync(){const open=!collapsed;document.body.classList.toggle('sidebar-hidden',collapsed);document.body.classList.toggle('menu-open',open&&media.matches);sidebar.hidden=collapsed;backdrop.hidden=collapsed||!media.matches;menu.replaceChildren();const icon=document.createElement('span');icon.setAttribute('aria-hidden','true');icon.textContent=open?'×':'▦';const label=document.createElement('span');label.textContent=tr('Menú');menu.append(icon,label);menu.title=tr(collapsed?'Mostrar menú':'Ocultar menú');menu.setAttribute('aria-label',menu.title);menu.setAttribute('aria-expanded',String(open));if(open&&media.matches){sidebar.setAttribute('role','dialog');sidebar.setAttribute('aria-modal','true');sidebar.setAttribute('aria-label','Onda')}else{sidebar.removeAttribute('role');sidebar.removeAttribute('aria-modal')}window.dispatchEvent(new Event('resize'))}
+ function close(focus=true){collapsed=true;try{localStorage.setItem('onda-sidebar-hidden','true')}catch{}sync();if(focus&&!document.querySelector('dialog[open]'))menu.focus()}
+ menu.onclick=()=>{collapsed=!collapsed;try{localStorage.setItem('onda-sidebar-hidden',String(collapsed))}catch{}sync();if(!collapsed&&media.matches)sidebar.querySelector('button')?.focus()};backdrop.onclick=()=>close();
+ document.addEventListener('click',e=>{if(collapsed)return;if(e.target.closest('aside nav button')){close(false);return}if(!media.matches&&!e.target.closest('aside,#toggleSidebar,dialog'))close(false)});
+ document.addEventListener('keydown',e=>{if(collapsed||document.querySelector('dialog[open]'))return;if(e.key==='Escape'){e.preventDefault();close()}if(e.key==='Tab'&&media.matches){const nodes=[menu,...sidebar.querySelectorAll('a,button')].filter(n=>!n.disabled&&!n.hidden);const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+ media.addEventListener?.('change',()=>{if(media.matches)collapsed=true;sync()});document.querySelector('header').prepend(menu);document.addEventListener('onda-language-changed',sync);sync();
 })();

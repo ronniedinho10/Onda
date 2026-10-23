@@ -8,3 +8,7 @@ Country boundaries: Natural Earth, 1:110m, public domain.
 https://www.naturalearthdata.com/about/terms-of-use/
 Source conversion: https://github.com/nvkelso/natural-earth-vector
 Country borders are simplified and represent cartographic data, not an endorsement of any territorial claim.
+
+TDTChannels radio directory: https://github.com/LaQuay/TDTChannels/blob/master/RADIO.md
+Copyright TDTChannels contributors. Apache License 2.0, included as TDTChannels.LICENSE. Metadata adapted to Onda; COPE Más variants separated and official Valladolid stream links supplemented. Broadcaster content and logos remain their respective owners’ property. No tdtchannels.com hosted-list service is used by this application.
+hls.js 1.7.3: https://github.com/video-dev/hls.js, Apache-2.0, license included as hls.LICENSE. Loaded locally only when HLS playback requires Media Source Extensions.
