@@ -1,5 +1,5 @@
 globalThis.OndaI18n=(()=>{
- const supported=['es','en','fr','de','it','pt'];let language='es';const dictionary=new Map(),canonical=new Map(),textSources=new WeakMap(),attributeSources=new WeakMap();
+ const supported=['es','en','fr','de','it','pt','ca','nl','pl','ja'];let language='es';const dictionary=new Map(),canonical=new Map(),textSources=new WeakMap(),attributeSources=new WeakMap();
  const add=(es,en,fr)=>{dictionary.set(es,{...dictionary.get(es),es,en,fr});[es,en,fr].forEach(value=>canonical.set(value,es))};
  [
  ['TU ESPACIO','YOUR SPACE','VOTRE ESPACE'],['Explorar','Explore','Explorer'],['Mis favoritas','My favorites','Mes favoris'],['Ajustar retardo','Adjust delay','Régler le décalage'],['NUEVO','NEW','NOUVEAU'],['Un mundo por escuchar.','A world to listen to.','Un monde à écouter.'],['Tu próxima conexión está','Your next connection is','Votre prochaine connexion est'],['a una frecuencia de distancia.','just a frequency away.','à une fréquence de vous.'],['Mi espacio','My space','Mon espace'],['Guardado en este dispositivo','Saved on this device','Enregistré sur cet appareil'],
