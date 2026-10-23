@@ -1,0 +1,13 @@
+(()=>{
+ const key='onda-resolved-logos';let cache={};try{cache=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{}const pending=new Map(),failed=new Map(),queue=[];let active=0;
+ const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const https=url=>{try{return new URL(url).protocol==='https:'?url:''}catch{return ''}};
+ function cached(s){const row=cache[s.stationuuid];return row&&Date.now()-row.time<30*86400000?https(row.url):''}
+ function save(s,url){cache[s.stationuuid]={url,time:Date.now()};cache=Object.fromEntries(Object.entries(cache).sort((a,b)=>b[1].time-a[1].time).slice(0,160));try{localStorage.setItem(key,JSON.stringify(cache))}catch{}}
+ function image(url){return new Promise(resolve=>{const img=new Image();let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);img.onload=img.onerror=null;resolve(ok)};const timer=setTimeout(()=>finish(false),3000);img.onload=()=>finish(img.naturalWidth>1);img.onerror=()=>finish(false);img.referrerPolicy='no-referrer';img.src=url})}
+ const host=s=>{try{return new URL(s.homepage).hostname.replace(/^www\./,'')}catch{return ''}};
+ async function find(s,bad){const candidates=[],saved=cached(s);if(saved&&saved!==bad)candidates.push(saved);if(cache[s.stationuuid]?.url===bad)delete cache[s.stationuuid];const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);try{const rows=await OndaSources.lookup({name:s.name,countryCode:s.countrycode},controller.signal);for(const row of rows){if(row.countrycode!==s.countrycode)continue;const sameName=normalize(row.name)===normalize(s.name),sameSite=host(s)&&host(s)===host(row);if((sameName||sameSite)&&https(row.favicon)&&row.favicon!==bad)candidates.push(row.favicon)}}catch{}finally{clearTimeout(timer)}const domain=host(s);if(domain){candidates.push('https://'+domain+'/favicon.ico');candidates.push('https://www.google.com/s2/favicons?domain='+encodeURIComponent(domain)+'&sz=128')}for(const url of [...new Set(candidates)].filter(u=>u!==bad).slice(0,4))if(await image(url)){save(s,url);return url}failed.set(s.stationuuid,Date.now());return ''}
+ function drain(){while(active<2&&queue.length){active++;const {s,bad,resolve}=queue.shift();find(s,bad).then(resolve,()=>resolve('')).finally(()=>{active--;pending.delete(s.stationuuid);drain()})}}
+ function resolve(s,bad=''){if(!s.stationuuid||Date.now()-(failed.get(s.stationuuid)||0)<600000)return Promise.resolve('');if(pending.has(s.stationuuid))return pending.get(s.stationuuid);const promise=new Promise(resolve=>queue.push({s,bad,resolve}));pending.set(s.stationuuid,promise);drain();return promise}
+ globalThis.OndaLogos={cached,resolve};
+})();
