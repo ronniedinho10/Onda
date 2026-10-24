@@ -136,3 +136,5 @@ body *,body *::before,body *::after{box-shadow:none!important;text-shadow:none!i
 #expandedPlayer #nowName{max-width:100%;min-width:0;padding:0;overflow-wrap:anywhere}
 body.native-android .world-controls{display:none!important}
 @media(max-width:760px){.world-controls{display:none!important}body.compact-home[data-station-layout=list] #stations>.station .tiny-play{margin:0!important}}
+
+.world-controls{display:none!important}#worldMessage:empty{display:none}.app-name img{width:40px;height:40px;flex-basis:40px}@media(max-width:400px){.app-name img{width:36px;height:36px;flex-basis:36px}}
