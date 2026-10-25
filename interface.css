@@ -138,3 +138,6 @@ body.native-android .world-controls{display:none!important}
 @media(max-width:760px){.world-controls{display:none!important}body.compact-home[data-station-layout=list] #stations>.station .tiny-play{margin:0!important}}
 
 .world-controls{display:none!important}#worldMessage:empty{display:none}.app-name img{width:40px;height:40px;flex-basis:40px}@media(max-width:400px){.app-name img{width:36px;height:36px;flex-basis:36px}}
+
+.view-all{font-family:inherit;font-size:14px;font-weight:500;line-height:1.35;letter-spacing:0}#mobileListControls>button,#mobileListControls #expandStations{font-family:inherit!important;font-size:14px!important;font-weight:500!important;line-height:1.35!important;letter-spacing:0!important;min-height:46px}
+.recommendation-options{align-self:flex-end;width:44px;height:32px;min-height:32px;margin-top:auto;padding:0;line-height:1;font-size:24px;color:var(--muted);background:transparent;border:0;border-radius:10px}.recommendation-feedback-actions{display:grid;gap:12px}.recommendation-feedback-actions button{text-align:left;min-height:46px;padding:12px}#recommendationFeedback h2{padding-right:24px;font-size:21px}
