@@ -141,3 +141,11 @@ body.native-android .world-controls{display:none!important}
 
 .view-all{font-family:inherit;font-size:14px;font-weight:500;line-height:1.35;letter-spacing:0}#mobileListControls>button,#mobileListControls #expandStations{font-family:inherit!important;font-size:14px!important;font-weight:500!important;line-height:1.35!important;letter-spacing:0!important;min-height:46px}
 .recommendation-options{align-self:flex-end;width:44px;height:32px;min-height:32px;margin-top:auto;padding:0;line-height:1;font-size:24px;color:var(--muted);background:transparent;border:0;border-radius:10px}.recommendation-feedback-actions{display:grid;gap:12px}.recommendation-feedback-actions button{text-align:left;min-height:46px;padding:12px}#recommendationFeedback h2{padding-right:24px;font-size:21px}
+
+/* El foco visible ayuda con el teclado; tocar o devolver foco no dibuja recuadros. */
+html:not(.keyboard-navigation) :focus:not(.appearance-swatch){outline:none!important;outline-offset:0!important}
+html.keyboard-navigation :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.notification-setting{display:grid;gap:10px;font-size:14px}.notification-setting select{width:100%;min-width:0;min-height:46px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit}
+
+.volume .mute-toggle,.mini-volume .mute-toggle{display:grid;place-items:center;flex:none;width:36px;height:36px;min-width:36px;min-height:36px;padding:0!important;border:0;border-radius:50%;background:transparent;color:var(--muted);line-height:1}.mute-toggle svg{display:block;width:22px;height:22px;pointer-events:none}.mute-toggle[aria-pressed=true]{color:var(--accent)}

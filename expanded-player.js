@@ -15,7 +15,7 @@
  function close(){if(!dialog.open)return;cleanup();dialog.close();if(!reducedMotion.matches)document.querySelector('#miniPlayer').animate?.([{opacity:.65},{opacity:1}],{duration:180});}
 
  function open(){if(!current||dialog.open)return;cleanup();content.scrollTop=0;dialog.showModal();document.body.classList.add('player-expanded');animateEntrance()}
- handle.onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.addEventListener('close',()=>{cleanup();document.querySelector('.mini-open').focus()});dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close()}});
+ handle.onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close()});dialog.addEventListener('close',()=>{cleanup();document.querySelector('.mini-open').focus({preventScroll:true})});dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close()}});
  document.addEventListener('onda-open-player',open);document.querySelector('#miniPlayer').addEventListener('click',e=>{if(!e.target.closest('button,input,label'))open()});
  stage.querySelector('.stage-kicker').hidden=true;stage.querySelector('.record-wrap').style.touchAction='none';
  dialog.addEventListener('pointerdown',e=>{if(e.isPrimary===false||e.button!==0||e.target.closest('input,select,textarea'))return;stopEntrance();drag={id:e.pointerId,x:e.clientX,y:e.clientY,locked:false,pull:0};},true);
