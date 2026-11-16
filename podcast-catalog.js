@@ -21,7 +21,23 @@
  async function load(key,type,fetcher,options={}){const saved=cached(key);if(!options.force&&saved&&Date.now()-saved.time<TTL[type])return {...saved,stale:false,cached:true};if(pending.has(key)&&!options.signal)return pending.get(key);const task=(async()=>{try{const result=await fetcher();if(options.signal?.aborted)throw new DOMException('Aborted','AbortError');const row={...result,time:Date.now()};store(key,row);return {...row,stale:false};}catch(error){if(error.name==='AbortError'||options.signal?.aborted)throw error;if(saved)return {...saved,stale:true};throw error;}finally{if(pending.get(key)===task)pending.delete(key);}})();if(!options.signal)pending.set(key,task);return task;}
  const api={
   chart(code,options={}){const market=country(code);if(!market)return Promise.reject(Error('Choose a country'));return load('charts:'+market,'charts',async()=>{const data=await request('https://itunes.apple.com/'+market+'/rss/toppodcasts/limit=50/json',options);const entries=Array.isArray(data.feed?.entry)?data.feed.entry:data.feed?.entry?[data.feed.entry]:[];return {rows:entries.map((r,i)=>show(r,i+1)).filter(Boolean),market,source:'apple'};},options);},
-  search(code,query,options={}){const market=country(code),term=clean(query,120);if(!market||term.length<2)return Promise.resolve({rows:[],time:Date.now()});return load('search:'+market+':'+term.toLocaleLowerCase(),'search',async()=>{const params=new URLSearchParams({term,media:'podcast',entity:'podcast',country:market,limit:'30'});const data=await request('https://itunes.apple.com/search?'+params,options);return {rows:(data.results||[]).filter(r=>r.kind==='podcast').map(r=>show(r)).filter(Boolean),market,source:'apple'};},options);},
+  search(code,query,options={}){const market=country(code),term=clean(query,120);if(!market||term.length<2)return Promise.resolve({rows:[],time:Date.now()});return load('search-all:'+market+':'+term.toLocaleLowerCase(),'search',async()=>{const params=new URLSearchParams({term,media:'podcast',entity:'podcast',country:market,limit:'30'});const episodeParams=new URLSearchParams(params);episodeParams.set('entity','podcastEpisode');
+   const [programs,episodes]=await Promise.allSettled([
+    request('https://itunes.apple.com/search?'+params,options),
+    request('https://itunes.apple.com/search?'+episodeParams,options)
+   ]);
+   if(programs.status==='rejected'&&episodes.status==='rejected')throw programs.reason;
+   const rows=(programs.value?.results||[]).filter(r=>r.kind==='podcast').map(r=>show(r)).filter(Boolean);
+   const matches=[],seen=new Set();
+   for(const row of episodes.value?.results||[]){
+    if(row.kind!=='podcast-episode'||!id(row.collectionId))continue;
+    const program=show({...row,trackName:row.collectionName,trackViewUrl:row.collectionViewUrl});
+    const item=episode(row,program);
+    const key=item&&JSON.stringify([program.id,item.id]);
+    if(!item?.title||seen.has(key))continue;
+    seen.add(key);matches.push({program,item});
+   }
+   return {rows,matches,market,source:'apple'};},options);},
   episodes(program,code,options={}){const key=id(program?.id),market=country(code);if(!key||!market)return Promise.reject(Error('Invalid podcast'));return load('episodes:'+key+':'+market,'episodes',async()=>{const params=new URLSearchParams({id:key,entity:'podcastEpisode',limit:'100',country:market});const data=await request('https://itunes.apple.com/lookup?'+params,options);const meta=(data.results||[]).find(r=>r.kind==='podcast');const normalized=meta?show(meta):null;const details=normalized?{...program,...normalized,description:normalized.description||program.description,artwork:normalized.artwork||program.artwork,link:normalized.link||program.link,rank:program.rank}:program;let rows=unique((data.results||[]).filter(r=>r.kind==='podcast-episode').map(r=>episode(r,details)));let source='apple';if(details.feed){try{const text=await request(details.feed,{...options,json:false,timeout:3500});const fresh=parseFeed(text,details);if(fresh.length){rows=fresh;source='publisher';}}catch(error){if(options.signal?.aborted)throw error;}}return {rows,show:details,source,market};},options);},
   peekChart:code=>cached('charts:'+country(code)),peekEpisodes:(program,code)=>cached('episodes:'+id(program?.id)+':'+country(code)),parseFeed,safeUrl:url
  };globalThis.OndaPodcastCatalog=api;
