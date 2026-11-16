@@ -15,6 +15,7 @@ function render(){const rawList=view==='favorites'?favorites:stations,list=globa
 
 let loadController,loadVersion=0,renderedCacheKey=null;
 async function load(more=false){
+ if(globalThis.OndaPodcasts?.isOpen()&&view!=='favorites'){OndaPodcasts.countryChanged();return}
  if(view==='favorites')return render();const catalog=globalThis.OndaCatalog,cacheKey=globalThis.OndaStationCache?.key(),cached=!more&&globalThis.OndaStationCache?.read(cacheKey),retained=cacheKey===renderedCacheKey&&stations.length>0;if(!more){if(!retained){stations=cached?.stations||[];render()}renderedCacheKey=cacheKey;$('#count').textContent=''}$('#stations').setAttribute('aria-busy','true');document.dispatchEvent(new CustomEvent('onda-catalog-loading',{detail:{more}}));if(catalog&&!more)catalog.state.limit=30;
  const version=++loadVersion;loadController?.abort();const controller=new AbortController();loadController=controller;const timeout=setTimeout(()=>controller.abort(),25000);
  $('#status').textContent=more?'':'Buscando emisoras'+(catalog?' · '+catalog.describe():'')+'…';const moreButton=$('#catalogMore');if(moreButton){moreButton.disabled=true;moreButton.textContent='Buscando…'}
