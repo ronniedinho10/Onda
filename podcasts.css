@@ -3,3 +3,7 @@
 .podcast-transport>button:not(.podcast-play) svg{width:32px;height:32px;display:block}.podcast-transport small{top:18px;line-height:10px}#podcastForward svg{transform:scaleX(-1)}
 
 .podcast-play svg{pointer-events:none}
+
+.podcast-episode-search{width:min(100%,36rem);padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);font:inherit}.podcast-download{margin:0 12px 12px}
+
+#podcastDownloads{margin:12px 0}#podcastDownloads summary{cursor:pointer;color:var(--accent)}#podcastDownloads>div{padding:8px 0}#podcastDownloads>div>div{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
