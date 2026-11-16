@@ -1,5 +1,5 @@
 (()=>{
- const TTL={charts:3600000,episodes:300000,search:600000},prefix='onda-podcast-cache-v2:',memory=new Map(),pending=new Map();
+ const TTL={charts:3600000,episodes:300000,search:600000,transcript:604800000},prefix='onda-podcast-cache-v3:',memory=new Map(),pending=new Map();
  const clean=(value,max=2000)=>String(value||'').slice(0,max).trim();
  function url(value){try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)return '';const host=u.hostname.toLowerCase();if(host==='localhost'||host.endsWith('.local')||host.endsWith('.localhost')||host.endsWith('.internal')||host.includes(':')||host.startsWith('[')||/^\d+(?:\.\d+){3}$/.test(host)||!host.includes('.'))return '';return u.href;}catch{return '';}}
  function plain(value){const node=new DOMParser().parseFromString(String(value||'').slice(0,30000),'text/html');node.querySelectorAll('script,style').forEach(n=>n.remove());return clean(node.body.textContent.replace(/\s+/g,' '),4000);}
@@ -16,10 +16,44 @@
  function show(row,rank){const category=clean(row.category?.attributes?.label||row.primaryGenreName||row.genres?.[0],80);const key=id(row.collectionId||row.trackId||row.id?.attributes?.['im:id']);if(!key)return null;return {id:key,title:plain(row.collectionName||row.trackName||row['im:name']?.label).slice(0,180),author:plain(row.artistName||row['im:artist']?.label).slice(0,180),description:plain(row.description||row.summary?.label||''),artwork:url(row.artworkUrl600||row.artworkUrl100||row['im:image']?.at(-1)?.label),feed:url(row.feedUrl),link:url(row.collectionViewUrl||row.trackViewUrl||row.link?.attributes?.href||row.id?.label),rank:rank||0,category};}
  function episode(row,program){const audio=url(row.episodeUrl);if(!audio||row.episodeContentType&&row.episodeContentType!=='audio')return null;const key=clean(row.episodeGuid||row.trackId||audio,600);return {id:key,showId:program.id,title:plain(row.trackName).slice(0,240),description:plain(row.description||row.shortDescription),audio,artwork:url(row.artworkUrl600)||program.artwork,date:Number.isFinite(Date.parse(row.releaseDate))?Date.parse(row.releaseDate):0,duration:Math.max(0,Number(row.trackTimeMillis)||0)/1000,link:url(row.trackViewUrl)};}
  function duration(value){if(/^\d+(?:\.\d+)?$/.test(value||''))return Number(value);const parts=String(value||'').split(':').map(Number);if(parts.length>3||parts.some(n=>!Number.isFinite(n)))return 0;return parts.reduce((total,n)=>total*60+n,0);}
- function parseFeed(text,program){if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error('Unsupported XML');const xml=new DOMParser().parseFromString(text,'application/xml');if(xml.querySelector('parsererror'))throw Error('Invalid podcast feed');const child=(node,name)=>[...node.children].find(n=>n.localName===name);const rows=[];for(const item of [...xml.getElementsByTagName('item')].slice(0,200)){const enclosure=child(item,'enclosure'),audio=url(enclosure?.getAttribute('url'));if(!audio||enclosure.getAttribute('type')&&!enclosure.getAttribute('type').startsWith('audio/'))continue;const art=[...item.children].find(n=>n.localName==='image');rows.push({id:clean(child(item,'guid')?.textContent||audio,600),showId:program.id,title:plain(child(item,'title')?.textContent).slice(0,240),description:plain(child(item,'description')?.textContent||child(item,'encoded')?.textContent),audio,artwork:url(art?.getAttribute('href'))||program.artwork,date:Number.isFinite(Date.parse(child(item,'pubDate')?.textContent))?Date.parse(child(item,'pubDate').textContent):0,duration:duration(child(item,'duration')?.textContent),link:url(child(item,'link')?.textContent)});}return unique(rows);}
+ function parseFeed(text,program){if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error('Unsupported XML');const xml=new DOMParser().parseFromString(text,'application/xml');if(xml.querySelector('parsererror'))throw Error('Invalid podcast feed');const child=(node,name)=>[...node.children].find(n=>n.localName===name);const rows=[];for(const item of [...xml.getElementsByTagName('item')].slice(0,200)){const enclosure=child(item,'enclosure'),audio=url(enclosure?.getAttribute('url'));if(!audio||enclosure.getAttribute('type')&&!enclosure.getAttribute('type').startsWith('audio/'))continue;const art=[...item.children].find(n=>n.localName==='image');
+   const transcripts=[...item.children].filter(n=>n.localName==='transcript').map(n=>({
+    url:url(n.getAttribute('url')),type:clean(n.getAttribute('type'),80)
+   })).filter(track=>track.url&&/text\/vtt|srt|subrip|application\/json/i.test(track.type));
+   rows.push({id:clean(child(item,'guid')?.textContent||audio,600),showId:program.id,title:plain(child(item,'title')?.textContent).slice(0,240),description:plain(child(item,'description')?.textContent||child(item,'encoded')?.textContent),audio,artwork:url(art?.getAttribute('href'))||program.artwork,date:Number.isFinite(Date.parse(child(item,'pubDate')?.textContent))?Date.parse(child(item,'pubDate').textContent):0,duration:duration(child(item,'duration')?.textContent),transcripts,link:url(child(item,'link')?.textContent)});}return unique(rows);}
  function unique(rows){const seen=new Set();return rows.filter(row=>{if(!row||!row.title||seen.has(row.audio)||seen.has(row.id))return false;seen.add(row.audio);seen.add(row.id);return true;}).sort((a,b)=>b.date-a.date).slice(0,100);}
  async function load(key,type,fetcher,options={}){const saved=cached(key);if(!options.force&&saved&&Date.now()-saved.time<TTL[type])return {...saved,stale:false,cached:true};if(pending.has(key)&&!options.signal)return pending.get(key);const task=(async()=>{try{const result=await fetcher();if(options.signal?.aborted)throw new DOMException('Aborted','AbortError');const row={...result,time:Date.now()};store(key,row);return {...row,stale:false};}catch(error){if(error.name==='AbortError'||options.signal?.aborted)throw error;if(saved)return {...saved,stale:true};throw error;}finally{if(pending.get(key)===task)pending.delete(key);}})();if(!options.signal)pending.set(key,task);return task;}
+ function parseTranscript(text,type){
+  const limit=5000;
+  const timestamp=value=>/^\d{1,3}:\d{2}(?::\d{2})?[,.]\d{3}$/.test(value)?duration(value.replace(',','.')):NaN;
+  let rows;
+  if(type.includes('json')){
+   const data=JSON.parse(text);
+   rows=(Array.isArray(data.segments)?data.segments:[]).slice(0,limit)
+    .map(segment=>({start:Number(segment.startTime),text:plain(segment.body).slice(0,800)}));
+  }else{
+   rows=text.replace(/\r/g,'').split(/\n[ \t]*\n/).slice(0,limit).map(block=>{
+    const lines=block.split('\n'), index=lines.findIndex(line=>line.includes('-->'));
+    if(index<0)return null;
+    return {start:timestamp(lines[index].split('-->')[0].trim()),text:plain(lines.slice(index+1).join(' ')).slice(0,800)};
+   }).filter(Boolean);
+  }
+  return rows.filter(row=>Number.isFinite(row.start)&&row.start>=0&&row.text).sort((a,b)=>a.start-b.start);
+ }
  const api={
+  transcript(tracks,options={}){
+   return load('transcript:'+tracks[0].url,'transcript',async()=>{
+    for(const track of tracks){
+     try{
+      const text=await request(track.url,{...options,json:false,timeout:5000});
+      const rows=parseTranscript(text,track.type.toLowerCase());
+      if(rows.length)return {rows};
+     }catch(error){if(options.signal?.aborted)throw error;}
+    }
+    throw Error('Transcript unavailable');
+   },options);
+  },
+  parseTranscript,
   chart(code,options={}){const market=country(code);if(!market)return Promise.reject(Error('Choose a country'));return load('charts:'+market,'charts',async()=>{const data=await request('https://itunes.apple.com/'+market+'/rss/toppodcasts/limit=50/json',options);const entries=Array.isArray(data.feed?.entry)?data.feed.entry:data.feed?.entry?[data.feed.entry]:[];return {rows:entries.map((r,i)=>show(r,i+1)).filter(Boolean),market,source:'apple'};},options);},
   search(code,query,options={}){const market=country(code),term=clean(query,120);if(!market||term.length<2)return Promise.resolve({rows:[],time:Date.now()});return load('search-all:'+market+':'+term.toLocaleLowerCase(),'search',async()=>{const params=new URLSearchParams({term,media:'podcast',entity:'podcast',country:market,limit:'30'});const episodeParams=new URLSearchParams(params);episodeParams.set('entity','podcastEpisode');
    const [programs,episodes]=await Promise.allSettled([
